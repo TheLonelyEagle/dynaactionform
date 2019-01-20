@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta charset="utf-8">
+  <title>专属定制</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="../lib/weui/weui.min.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/crops.css">
+</head>
+<body>
+    <div class="weui-flex topbar color-red line-3">
+        <span class="f1 flex-center" onclick="$(this).parent().parent().addClass('hide');">
+           
+        </span>
+        <span class="f4 flex-center fontbold">
+            动态表单
+        </span>
+        <span class="f1"></span>
+    </div>
+    <form id="projectItems" class="weui-cells"></form>
+    <div class="weui-cells">
+        <span class="weui-btn weui-btn_primary fix bt0 full"> 提 交 </span>
+    </div>
+    <!--多选的弹出层-->
+    <div class="full fullh bgfff tp0 bt0 fix hide" id="multiBox">
+        <div class="weui-flex topbar color-red line-3">
+            <span class="f1 flex-center" onclick="$(this).parent().parent().addClass('hide');">
+                返回
+            </span>
+            <span class="f4">
+                
+            </span>
+            <span class="f1"></span>
+        </div>
+        <div class="h40"></div>
+            <div class="pd10" >
+                <div class="crop-group-con" id="itemList" data-group="">
+                    
+                </div>
+            </div>
+        <div class="fix bt0 weui-btn weui-btn_warn full" onclick="getSelect();"> 确 认 </div>
+    </div>
+</body>
+<!--选项模板-->
+<script type="text/html" id="tpl_item">
+    {{each $data item i}}
+        <div class="weui-cell {{if item.answerMethod!=3}}weui-cell_access{{/if}}" >
+            <div class="weui-cell__bd">
+                <span class="fontbold">{{item.surveyName}}{{if item.answerMethod==1}}(单选){{else if item.answerMethod==2}}(多选){{/if}}：</span>
+            </div>
+            <div class="weui-cell__ft">
+                {{if item.answerMethod!=3}}
+                <span class="color-666 font14" data-surveyname="{{item.surveyName}}" onclick="getItem({{item.answerMethod}},'{{item.surveyno}}',{{item.optionals}});" id="{{item.surveyno}}">请选择</span>
+                {{else}}
+                <input class="noborder line-2" placeholder="请输入" type="text" name="{{item.surveyno}}" id="{{item.surveyno}}" data-surveyName="{{item.surveyName}}">
+                {{/if}}
+            </div>
+        </div>
+    {{/each}}
+  </script>
+<script src="../lib/jquery.min.js"></script>
+<script src="../lib/template-web.js"></script>
+<script src="../lib/weui/weui.min.js"></script>
+<script>
+$(function(){
+    $.getJSON('data/wheat.json',function(res){
+        if(res.code==200){
+            var list = res.data;
+            var str = template("tpl_item",list);
+            $("#projectItems").empty().append(str);
+        }else{
+            weui.alert('获取数据失败');
+        }
+    });
+});
+
+function getItem(type,id,list){
+    if(type==1){
+        //单选
+        var items=[];
+        for(var i = 0; i < list.length; i++){
+            var obj = {
+                label:list[i].value,
+                value:list[i].code
+            };
+            items.push(obj);
+        }
+        weui.picker(items, 
+            {
+                onChange: function (result) {},
+                onConfirm: function (result) {
+                    $("#"+id).text(result[0].label);
+                    $("#"+id).data("value",result[0].value);
+                    $("#"+id).data("type",1);
+                }
+            }
+        );
+    }else if(type==2){
+        //多选
+        $("#itemList").data("group",id);
+        $("#itemList").empty();
+        for(var i=0;i<list.length;i++){
+            var str = '<div class="crop-item" data-value="'+list[i].code+'">'+list[i].value+'</div>';
+            $("#itemList").append(str);
+            $("#multiBox").removeClass("hide");
+        }
+        $(".crop-item").click(function(){
+            if($(this).hasClass("crop-item-sel")){
+                $(this).removeClass("crop-item-sel");
+            }else{
+                $(this).addClass("crop-item-sel");
+            }
+        });
+    }
+}
+function getSelect(){
+    var selist = $(".crop-item-sel");
+    var selResult,selResultStr;
+    for(var i = 0; i < selist.length; i++ ){
+        if(i == 0){
+            selResult = selist.eq(0).data("value");
+            selResultStr = selist.eq(0).text();
+        }else{
+            selResult += "," + selist.eq(i).data("value");
+            if(i < 3){
+                selResultStr += ","+selist.eq(i).text();
+            }
+        }
+    }
+    if(selist.length>3){
+        selResultStr+='...';
+    }
+    var id = $("#itemList").data("group");
+    $("#"+id).text(selResultStr);
+    $("#"+id).data("value",selResult);
+    $("#"+id).data("type",2);
+    $("#multiBox").addClass("hide");
+}
+
+function sub(){
+    var list = $("#projectItems .weui-cell__ft span");
+    var dMemberAiPlanSurvey = [];
+    for(var i = 0;i < list.length; i++){
+        var surveyno = list.eq(i).attr("id");
+        var answermethod = list.eq(i).data("type");
+        var surveyvalue = list.eq(i).data("value");
+        var surveyname = list.eq(i).data("surveyname");
+        dMemberAiPlanSurvey.push({
+            surveyno : surveyno,
+            answermethod : answermethod,
+            surveyvalue : surveyvalue,
+            surveyname : surveyname
+        });
+    }
+    var inputList = $("#projectItems  .weui-cell__ft input");
+    for(var j = 0; j < inputList.length; j++){
+        var surveyno = inputList.eq(j).attr("id");
+        var answermethod = 3;
+        var surveyvalue = inputList.eq(j).val();
+        var surveyname = inputList.eq(j).data("surveyname");
+        dMemberAiPlanSurvey.push({
+            surveyno : surveyno,
+            answermethod : answermethod,
+            surveyvalue : surveyvalue,
+            surveyname : surveyname
+        });
+    }
+
+    console.log(dMemberAiPlanSurvey);
+
+}
+</script>
+</html>

@@ -1,0 +1,25 @@
+.crop-group-con {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .crop-group-con .crop-item {
+    width: 100px;
+    margin-left: 16px;
+    margin-bottom: 12px;
+    text-align: center;
+    height: 36px;
+    line-height: 36px;
+    font-size: 14px;
+    color: #666666;
+    border-radius: 20px;
+    border: 1px solid #F4F4F4;
+    background-color: #F4F4F4;
+    transition: all 0.5s;
+  }
+  
+  .crop-group-con .crop-item-sel {
+    color: #E04339;
+    border: 1px solid #E04339;
+    background-color: #FFFFFF;
+  }
